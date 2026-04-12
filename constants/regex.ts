@@ -1,0 +1,16 @@
+export const REGEX = {
+    MONTH_NAME: /jan|feb|ma[ar]|apr|mei|may|jun|jul|aug|sep|o[ck]t|nov|dec/i,
+    RESULTS_COUNT: /\d+\s+vakanties gevonden/,
+    DAY_NUMBER: /^\d{1,2}$/,
+    DESTINATION_PLACEHOLDER: /bijv\.|kies/i,
+    SYSTEM_LINK_TEXT: /verwijder|opslaan|alle bestemming/i,
+    DESTINATION_WORD: /\w{2,}/,
+    SEARCH_VALIDATION: /kies|selecteer|vul in/i,
+    SELECT_ROOM: /Selecteer|Kies/i,
+    CONTINUE: /Doorgaan|Verder|Boek/i,
+    BOOK_NOW: /Boek Nu/i,
+    SAVE: /Opslaan/i,
+    ERROR_BANNER: /Oeps|wijzig|veld/i,
+    ERROR_BANNER_FULL: /Oeps.*veld.*nogmaals/i,
+    SUBMIT: /Verder naar betalen/i,
+} as const;
