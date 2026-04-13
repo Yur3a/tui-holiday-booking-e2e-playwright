@@ -35,30 +35,18 @@ export async function safeGoto(page: Page, url: string): Promise<void> {
     throw lastError ?? new Error(`Navigation failed after ${MAX_RETRIES} retries: ${url}`);
 }
 
-export async function waitForLoadingOverlayToClear(page: Page, timeout = 30_000): Promise<void> {
+export async function waitForLoadingOverlayToClear(page: Page, timeout = 60_000): Promise<void> {
     const overlay = page.locator(LOADING_OVERLAY_SELECTOR).first();
 
-    const isVisible = await overlay.isVisible({ timeout: 1_000 }).catch(() => false);
-    if (isVisible) {
-        await overlay.waitFor({ state: 'hidden', timeout }).catch(() => { });
-    }
+    const isVisible = await overlay.isVisible().catch(() => false);
+    if (!isVisible) return;
 
-    await page.waitForFunction(
-        (selector) => {
-            const element = document.querySelector<HTMLElement>(selector);
-            if (!element) return true;
-
-            const style = window.getComputedStyle(element);
-            return style.display === 'none' || style.visibility === 'hidden' || style.pointerEvents === 'none';
-        },
-        LOADING_OVERLAY_SELECTOR,
-        { timeout },
-    ).catch(() => { });
+    console.warn('[waitForOverlay] Loading spinner detected, waiting for it to clear...');
+    await overlay.waitFor({ state: 'hidden', timeout });
 }
 
-export async function clickWhenReady(page: Page, clickAction: () => Promise<void>, timeout = 30_000): Promise<void> {
-    await waitForLoadingOverlayToClear(page, timeout);
-    await clickAction();
+export async function waitForPageReady(page: Page, timeout = 60_000): Promise<void> {
+    await page.waitForLoadState('networkidle').catch(() => { });
     await waitForLoadingOverlayToClear(page, timeout);
 }
 

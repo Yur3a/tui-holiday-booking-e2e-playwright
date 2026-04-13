@@ -1,6 +1,6 @@
 import type { Page } from '@playwright/test';
 import { REGEX } from '../constants/regex.js';
-import { clickWhenReady, waitForLoadingOverlayToClear } from '../utils/navigation.js';
+import { waitForLoadingOverlayToClear, waitForPageReady } from '../utils/navigation.js';
 
 export class HotelPage {
     constructor(private page: Page) { }
@@ -18,7 +18,8 @@ export class HotelPage {
 
         const isVisible = await selectButton.isVisible({ timeout: 5_000 }).catch(() => false);
         if (isVisible) {
-            await clickWhenReady(this.page, () => selectButton.click());
+            await waitForLoadingOverlayToClear(this.page);
+            await selectButton.click();
             await this.page.waitForLoadState('domcontentloaded');
         }
     }
@@ -28,7 +29,8 @@ export class HotelPage {
             .filter({ hasText: REGEX.CONTINUE })
             .first();
         await continueButton.waitFor({ state: 'visible', timeout: 15_000 });
-        await clickWhenReady(this.page, () => continueButton.click());
+        await waitForPageReady(this.page);
+        await continueButton.click();
         await this.page.waitForLoadState('domcontentloaded');
     }
 }

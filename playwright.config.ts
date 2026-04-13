@@ -1,12 +1,14 @@
 import { defineConfig } from '@playwright/test';
 
+const isCI = !!process.env.CI;
+
 export default defineConfig({
-    workers: 4,
+    workers: isCI ? 1 : 4,
     testDir: './tests',
     timeout: 300_000,
     expect: { timeout: 10_000 },
     fullyParallel: false,
-    retries: 1,
+    retries: isCI ? 2 : 1,
     reporter: [['html'], ['list']],
     use: {
         baseURL: 'https://www.tui.nl',
