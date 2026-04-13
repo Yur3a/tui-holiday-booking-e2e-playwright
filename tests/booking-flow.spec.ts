@@ -15,7 +15,7 @@ test.describe('TUI Holiday Booking Flow', () => {
     test.describe('Main Booking Flow', () => {
         test.describe.configure({ retries: 2 });
 
-        test('complete booking flow and reach passenger details', async ({
+        test('should complete booking and reach passenger details', async ({
             homePage, searchPage, resultsPage, hotelPage, flightPage, passengerPage,
         }) => {
             await test.step('Navigate to homepage and accept cookies', async () => {
@@ -154,86 +154,122 @@ test.describe('TUI Holiday Booking Flow', () => {
             await passengerPage.waitForPage();
         });
 
-        test('missing first name shows required error', async ({ passengerPage }) => {
+        test('should require first name', async ({ passengerPage }) => {
+            // Arrange
             await passengerPage.fillFirstName('');
+
+            // Act
             await passengerPage.submitForm();
 
+            // Assert
             const error = await passengerPage.getFirstNameError();
             expect(error).toContain(MESSAGES.FIRST_NAME_REQUIRED);
             Logger.info('First Name Required Error', error);
         });
 
-        test('missing last name shows required error', async ({ passengerPage }) => {
+        test('should require last name', async ({ passengerPage }) => {
+            // Arrange
             await passengerPage.fillLastName('');
+
+            // Act
             await passengerPage.submitForm();
 
+            // Assert
             const error = await passengerPage.getLastNameError();
             expect(error).toContain(MESSAGES.LAST_NAME_REQUIRED);
             Logger.info('Last Name Required Error', error);
         });
 
-        test('invalid characters in first name shows format error', async ({ passengerPage }) => {
+        test('should reject invalid characters in first name', async ({ passengerPage }) => {
+            // Arrange
             await passengerPage.fillFirstName('John123!@#');
+
+            // Act
             await passengerPage.submitForm();
 
+            // Assert
             const error = await passengerPage.getFirstNameError();
             expect(error).toContain(MESSAGES.FIRST_NAME_FORMAT);
             Logger.info('First Name Invalid Chars Error', error);
         });
 
-        test('invalid characters in last name shows format error', async ({ passengerPage }) => {
+        test('should reject invalid characters in last name', async ({ passengerPage }) => {
+            // Arrange
             await passengerPage.fillLastName('Doe456$%^');
+
+            // Act
             await passengerPage.submitForm();
 
+            // Assert
             const error = await passengerPage.getLastNameError();
             expect(error).toContain(MESSAGES.LAST_NAME_FORMAT);
             Logger.info('Last Name Invalid Chars Error', error);
         });
 
-        test('invalid email format shows validation error', async ({ passengerPage }) => {
+        test('should reject invalid email format', async ({ passengerPage }) => {
+            // Arrange
             await passengerPage.fillEmail('not-an-email');
+
+            // Act
             await passengerPage.submitForm();
 
+            // Assert
             const error = await passengerPage.getEmailError();
             expect(error).toContain(MESSAGES.EMAIL_INVALID);
             Logger.info('Email Format Error', error);
         });
 
-        test('missing email shows required error', async ({ passengerPage }) => {
+        test('should require email', async ({ passengerPage }) => {
+            // Arrange
             await passengerPage.fillEmail('');
+
+            // Act
             await passengerPage.submitForm();
 
+            // Assert
             const error = await passengerPage.getEmailError();
             expect(error).toContain(MESSAGES.EMAIL_REQUIRED);
             Logger.info('Email Required Error', error);
         });
 
-        test('invalid phone number shows validation error', async ({ passengerPage }) => {
+        test('should reject invalid phone number', async ({ passengerPage }) => {
+            // Arrange
             await passengerPage.fillPhone('abc');
+
+            // Act
             await passengerPage.submitForm();
 
+            // Assert
             const error = await passengerPage.getPhoneError();
             expect(error).toContain(MESSAGES.PHONE_INVALID);
             Logger.info('Phone Validation Error', error);
         });
 
-        test('invalid date of birth format shows error', async ({ passengerPage }) => {
+        test('should reject invalid date of birth format', async ({ passengerPage }) => {
+            // Arrange
             await passengerPage.fillDateOfBirth('99-99-9999');
+
+            // Act
             await passengerPage.submitForm();
 
+            // Assert
             const banner = await passengerPage.getFormBannerError();
             const allErrors = await passengerPage.getAllErrors();
             expect(banner || allErrors.length > 0).toBeTruthy();
             Logger.info('Date of Birth Format Banner', banner);
         });
 
-        test('submitting empty form shows all required field errors', async ({ passengerPage }) => {
+        test('should show all errors on empty form submit', async ({ passengerPage }) => {
+            // Arrange
             await passengerPage.fillFirstName('');
             await passengerPage.fillLastName('');
             await passengerPage.fillEmail('');
             await passengerPage.fillPhone('');
+
+            // Act
             await passengerPage.submitForm();
 
+            // Assert
             const allErrors = await passengerPage.getAllErrors();
             expect(allErrors.length).toBeGreaterThan(0);
 
@@ -243,11 +279,15 @@ test.describe('TUI Holiday Booking Flow', () => {
             });
         });
 
-        test('special characters only in name fields show errors', async ({ passengerPage }) => {
+        test('should reject special characters in name fields', async ({ passengerPage }) => {
+            // Arrange
             await passengerPage.fillFirstName('!@#$%^&*()');
             await passengerPage.fillLastName('!@#$%^&*()');
+
+            // Act
             await passengerPage.submitForm();
 
+            // Assert
             const firstNameError = await passengerPage.getFirstNameError();
             const lastNameError = await passengerPage.getLastNameError();
 
@@ -258,11 +298,15 @@ test.describe('TUI Holiday Booking Flow', () => {
             Logger.info('Last Name Special Chars Error', lastNameError);
         });
 
-        test('numeric values in name fields show errors', async ({ passengerPage }) => {
+        test('should reject numeric values in name fields', async ({ passengerPage }) => {
+            // Arrange
             await passengerPage.fillFirstName('12345');
             await passengerPage.fillLastName('67890');
+
+            // Act
             await passengerPage.submitForm();
 
+            // Assert
             const firstNameError = await passengerPage.getFirstNameError();
             const lastNameError = await passengerPage.getLastNameError();
 
@@ -273,19 +317,27 @@ test.describe('TUI Holiday Booking Flow', () => {
             Logger.info('Last Name Numeric Error', lastNameError);
         });
 
-        test('email without domain shows validation error', async ({ passengerPage }) => {
+        test('should reject email without domain', async ({ passengerPage }) => {
+            // Arrange
             await passengerPage.fillEmail('user@');
+
+            // Act
             await passengerPage.submitForm();
 
+            // Assert
             const error = await passengerPage.getEmailError();
             expect(error).toContain(MESSAGES.EMAIL_INVALID);
             Logger.info('Email No Domain Error', error);
         });
 
-        test('future date of birth shows validation error', async ({ passengerPage }) => {
+        test('should reject future date of birth', async ({ passengerPage }) => {
+            // Arrange
             await passengerPage.fillDateOfBirth('01-01-2030');
+
+            // Act
             await passengerPage.submitForm();
 
+            // Assert
             const fieldError = await passengerPage.getDateOfBirthError();
             const banner = await passengerPage.getFormBannerError();
             expect(fieldError || banner).toBeTruthy();
