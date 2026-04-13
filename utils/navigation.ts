@@ -1,6 +1,7 @@
 import type { Page } from '@playwright/test';
 
 const MAX_RETRIES = 3;
+const LOADING_OVERLAY_SELECTOR = '#loading-spinner [aria-busy="true"], #loading-spinner .LoadingSpinner__overlay';
 
 export async function safeGoto(page: Page, url: string): Promise<void> {
     let lastError: Error | undefined;
@@ -32,6 +33,33 @@ export async function safeGoto(page: Page, url: string): Promise<void> {
     }
 
     throw lastError ?? new Error(`Navigation failed after ${MAX_RETRIES} retries: ${url}`);
+}
+
+export async function waitForLoadingOverlayToClear(page: Page, timeout = 30_000): Promise<void> {
+    const overlay = page.locator(LOADING_OVERLAY_SELECTOR).first();
+
+    const isVisible = await overlay.isVisible({ timeout: 1_000 }).catch(() => false);
+    if (isVisible) {
+        await overlay.waitFor({ state: 'hidden', timeout }).catch(() => { });
+    }
+
+    await page.waitForFunction(
+        (selector) => {
+            const element = document.querySelector<HTMLElement>(selector);
+            if (!element) return true;
+
+            const style = window.getComputedStyle(element);
+            return style.display === 'none' || style.visibility === 'hidden' || style.pointerEvents === 'none';
+        },
+        LOADING_OVERLAY_SELECTOR,
+        { timeout },
+    ).catch(() => { });
+}
+
+export async function clickWhenReady(page: Page, clickAction: () => Promise<void>, timeout = 30_000): Promise<void> {
+    await waitForLoadingOverlayToClear(page, timeout);
+    await clickAction();
+    await waitForLoadingOverlayToClear(page, timeout);
 }
 
 async function isErrorPage(page: Page): Promise<boolean> {
