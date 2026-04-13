@@ -3,7 +3,7 @@ import { defineConfig } from '@playwright/test';
 const isCI = !!process.env.CI;
 
 export default defineConfig({
-    workers: isCI ? 1 : 4,
+    workers: 1,
     testDir: './tests',
     timeout: 300_000,
     expect: { timeout: 10_000 },

@@ -8,7 +8,7 @@ export class FlightPage {
 
     async waitForFlights(): Promise<void> {
         await this.page.waitForLoadState('domcontentloaded');
-        await this.page.waitForURL(/flow\/summary/, { timeout: 30_000 });
+        await this.page.waitForURL(/flow\/summary/, { timeout: 30_000, waitUntil: 'domcontentloaded' });
         await this.page.getByText(MESSAGES.FLIGHTS_HEADING).first()
             .waitFor({ state: 'visible', timeout: 45_000 });
         await waitForPageReady(this.page);
@@ -31,11 +31,13 @@ export class FlightPage {
 
         const maxAttempts = 3;
         for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+            if (/passengerdetails/.test(this.page.url())) break;
+
             await waitForLoadingOverlayToClear(this.page, 60_000);
             await boekNuButton.click();
 
             const navigated = await this.page.waitForURL(/passengerdetails/, {
-                timeout: attempt < maxAttempts ? 20_000 : 60_000,
+                timeout: attempt < maxAttempts ? 30_000 : 60_000,
                 waitUntil: 'domcontentloaded',
             }).then(() => true).catch(() => false);
 

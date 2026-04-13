@@ -46,7 +46,7 @@ export async function waitForLoadingOverlayToClear(page: Page, timeout = 60_000)
 }
 
 export async function waitForPageReady(page: Page, timeout = 60_000): Promise<void> {
-    await page.waitForLoadState('networkidle').catch(() => { });
+    await page.waitForLoadState('domcontentloaded').catch(() => { });
     await waitForLoadingOverlayToClear(page, timeout);
 }
 
