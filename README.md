@@ -69,8 +69,6 @@ npm run test:headed       # with browser visible
 npm run test:debug        # step-by-step debug
 npm run test:ui           # Playwright UI mode
 npm run report            # open HTML report
-npm run lint              # check lint
-npm run lint:fix          # auto-fix lint
 ```
 
 ## Notes
