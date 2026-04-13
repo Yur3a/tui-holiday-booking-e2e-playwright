@@ -84,7 +84,7 @@ export class DatePicker {
         );
 
         if (!fieldText || fieldText.includes(MESSAGES.DATE_PLACEHOLDER)) {
-            throw new Error('Date was not selected — field still shows placeholder');
+            throw new Error('Date was not selected. Field still shows placeholder');
         }
     }
 }
