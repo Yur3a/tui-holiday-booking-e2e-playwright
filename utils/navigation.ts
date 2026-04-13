@@ -35,14 +35,16 @@ export async function safeGoto(page: Page, url: string): Promise<void> {
     throw lastError ?? new Error(`Navigation failed after ${MAX_RETRIES} retries: ${url}`);
 }
 
-export async function waitForLoadingOverlayToClear(page: Page, timeout = 60_000): Promise<void> {
+export async function waitForLoadingOverlayToClear(page: Page, timeout = 15_000): Promise<void> {
     const overlay = page.locator(LOADING_OVERLAY_SELECTOR).first();
 
     const isVisible = await overlay.isVisible().catch(() => false);
     if (!isVisible) return;
 
     console.warn('[waitForOverlay] Loading spinner detected, waiting for it to clear...');
-    await overlay.waitFor({ state: 'hidden', timeout });
+    await overlay.waitFor({ state: 'hidden', timeout }).catch(() => {
+        console.warn(`[waitForOverlay] Spinner did not clear within ${timeout}ms, proceeding anyway`);
+    });
 }
 
 export async function waitForPageReady(page: Page, timeout = 60_000): Promise<void> {
