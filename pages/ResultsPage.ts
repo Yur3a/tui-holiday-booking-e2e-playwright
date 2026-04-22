@@ -1,13 +1,14 @@
 import type { Page } from '@playwright/test';
 import { REGEX } from '../constants/regex.js';
+import { TIMEOUTS } from '../playwright.config.js';
 
 export class ResultsPage {
     constructor(private page: Page) { }
 
     async waitForResults(): Promise<void> {
         await this.page.waitForLoadState('domcontentloaded');
-        await this.page.getByText(REGEX.RESULTS_COUNT).first()
-            .waitFor({ state: 'visible', timeout: 30_000 });
+        await this.page.getByText(REGEX.RESULTS_COUNT)
+            .waitFor({ state: 'visible', timeout: TIMEOUTS.PAGE_LOAD });
     }
 
     async selectFirstHotel(): Promise<string> {

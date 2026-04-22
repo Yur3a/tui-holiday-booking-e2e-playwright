@@ -1,5 +1,4 @@
 export const SELECTORS = {
-    SEARCH_BUTTON: '[aria-label="search button"]',
     VALIDATION_ERROR: '[class*="error"] [class*="message"], [class*="alert"]',
     ERROR_BANNER: '[class*="error"], [class*="Error"]',
 } as const;

@@ -1,28 +1,29 @@
 import type { Page } from '@playwright/test';
 import { MESSAGES } from '../constants/messages.js';
 import { REGEX } from '../constants/regex.js';
+import { TIMEOUTS } from '../playwright.config.js';
 import { waitForLoadingOverlayToClear } from '../utils/navigation.js';
 
 export class FlightPage {
     constructor(private page: Page) { }
 
     async waitForFlights(): Promise<void> {
-        await this.page.getByText(MESSAGES.FLIGHTS_HEADING).first()
-            .waitFor({ state: 'visible', timeout: 45_000 });
+        await this.page.getByText(MESSAGES.FLIGHTS_HEADING)
+            .waitFor({ state: 'visible', timeout: TIMEOUTS.HEAVY_CONTENT });
     }
 
     async getFlightInfo(): Promise<string> {
         await this.waitForFlights();
 
         const flightSection = this.page.getByText(MESSAGES.FLIGHTS_HEADING)
-            .locator('..').locator('..').first();
+            .locator('..').locator('..');
         const flightText = (await flightSection.textContent())?.trim() ?? '';
         return flightText.replace(/\s+/g, ' ').substring(0, 200) || 'Default flight';
     }
 
     async clickContinue(): Promise<void> {
-        const boekNuButton = this.page.getByRole('button').filter({ hasText: REGEX.BOOK_NOW }).first();
-        await boekNuButton.waitFor({ state: 'visible', timeout: 15_000 });
+        const boekNuButton = this.page.getByRole('button', { name: REGEX.BOOK_NOW });
+        await boekNuButton.waitFor({ state: 'visible' });
 
         const maxAttempts = 3;
         for (let attempt = 1; attempt <= maxAttempts; attempt++) {
@@ -30,8 +31,9 @@ export class FlightPage {
 
             await boekNuButton.click();
 
+            // Early attempts use a shorter timeout; last attempt falls back to navigationTimeout
             const navigated = await this.page.waitForURL(/passengerdetails/, {
-                timeout: attempt < maxAttempts ? 30_000 : 60_000,
+                ...(attempt < maxAttempts && { timeout: TIMEOUTS.PAGE_LOAD }),
                 waitUntil: 'domcontentloaded',
             }).then(() => true).catch(() => false);
 

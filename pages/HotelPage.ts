@@ -1,5 +1,6 @@
 import type { Page } from '@playwright/test';
 import { REGEX } from '../constants/regex.js';
+import { TIMEOUTS } from '../playwright.config.js';
 import { waitForLoadingOverlayToClear, waitForPageReady } from '../utils/navigation.js';
 
 export class HotelPage {
@@ -7,8 +8,8 @@ export class HotelPage {
 
     async waitForPage(): Promise<void> {
         await waitForLoadingOverlayToClear(this.page);
-        await this.page.getByRole('heading', { level: 1 }).first()
-            .waitFor({ state: 'visible', timeout: 30_000 });
+        await this.page.getByRole('heading', { level: 1 })
+            .waitFor({ state: 'visible', timeout: TIMEOUTS.PAGE_LOAD });
     }
 
     async selectRoom(): Promise<void> {
@@ -16,7 +17,7 @@ export class HotelPage {
             .filter({ hasText: REGEX.SELECT_ROOM })
             .first();
 
-        const isVisible = await selectButton.isVisible({ timeout: 5_000 }).catch(() => false);
+        const isVisible = await selectButton.isVisible({ timeout: TIMEOUTS.OPTIONAL }).catch(() => false);
         if (isVisible) {
             await waitForLoadingOverlayToClear(this.page);
             await selectButton.click();
@@ -28,7 +29,7 @@ export class HotelPage {
         const continueButton = this.page.getByRole('button')
             .filter({ hasText: REGEX.CONTINUE })
             .first();
-        await continueButton.waitFor({ state: 'visible', timeout: 15_000 });
+        await continueButton.waitFor({ state: 'visible' });
         await waitForPageReady(this.page);
         await continueButton.click();
         await this.page.waitForLoadState('domcontentloaded');

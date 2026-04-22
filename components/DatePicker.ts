@@ -2,6 +2,7 @@ import type { Locator, Page } from '@playwright/test';
 import { ARIA } from '../constants/selectors.js';
 import { REGEX } from '../constants/regex.js';
 import { MESSAGES } from '../constants/messages.js';
+import { TIMEOUTS } from '../playwright.config.js';
 
 export class DatePicker {
     constructor(private page: Page) { }
@@ -31,15 +32,17 @@ export class DatePicker {
 
     private async closePanel(): Promise<void> {
         await this.page.keyboard.press('Escape');
-        await this.datePanel.waitFor({ state: 'hidden', timeout: 3_000 }).catch(() => { });
+        await this.datePanel.waitFor({ state: 'hidden', timeout: TIMEOUTS.OPTIONAL }).catch((error) => {
+            console.warn('[DatePicker] Panel did not close after Escape:', error.message);
+        });
     }
 
     private async trySelectDate(attempt: number): Promise<string> {
         await this.dateTrigger.click();
-        await this.datePanel.waitFor({ state: 'visible', timeout: 10_000 });
+        await this.datePanel.waitFor({ state: 'visible' });
 
         const monthCombobox = this.datePanel.getByRole('combobox');
-        await monthCombobox.waitFor({ state: 'visible', timeout: 5_000 });
+        await monthCombobox.waitFor({ state: 'visible' });
 
         const selectedMonth = await this.pickMonth(monthCombobox, attempt);
         await monthCombobox.selectOption({ label: selectedMonth });
@@ -56,10 +59,12 @@ export class DatePicker {
         await cell.click();
 
         const saveButton = this.datePanel.getByRole('button').filter({ hasText: REGEX.SAVE });
-        if (await saveButton.isVisible({ timeout: 3_000 }).catch(() => false)) {
+        if (await saveButton.isVisible({ timeout: TIMEOUTS.OPTIONAL }).catch(() => false)) {
             await saveButton.click();
         }
-        await this.datePanel.waitFor({ state: 'hidden', timeout: 5_000 }).catch(() => { });
+        await this.datePanel.waitFor({ state: 'hidden', timeout: TIMEOUTS.PANEL }).catch((error) => {
+            console.warn('[DatePicker] Panel did not hide after save:', error.message);
+        });
 
         await this.verifyDateSelected();
 

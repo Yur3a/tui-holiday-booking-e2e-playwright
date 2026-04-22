@@ -4,11 +4,6 @@ import { MESSAGES } from '../constants/messages.js';
 import { Logger } from '../utils/logger.js';
 import { safeGoto } from '../utils/navigation.js';
 
-interface StorageStateSnapshot {
-    cookies: { name: string; value: string; domain: string; path: string; expires: number; httpOnly: boolean; secure: boolean; sameSite: 'Strict' | 'Lax' | 'None' }[];
-    origins: { origin: string; localStorage: { name: string; value: string }[] }[];
-}
-
 test.describe('TUI Holiday Booking Flow', () => {
     const booking = createEmptyBooking();
 
@@ -77,80 +72,10 @@ test.describe('TUI Holiday Booking Flow', () => {
         });
     });
 
-    test.describe.serial('Passenger Details Validation', () => {
-        let passengerPageUrl: string | undefined;
-        let savedStorageState: StorageStateSnapshot | undefined;
-
-        test.beforeAll(async ({ browser }) => {
-            const context = await browser.newContext({
-                viewport: { width: 1920, height: 1080 },
-                locale: 'nl-NL',
-            });
-            const page = await context.newPage();
-
-            const { HomePage } = await import('../pages/HomePage.js');
-            const { SearchPage } = await import('../pages/SearchPage.js');
-            const { ResultsPage } = await import('../pages/ResultsPage.js');
-            const { HotelPage } = await import('../pages/HotelPage.js');
-            const { FlightPage } = await import('../pages/FlightPage.js');
-            const { attach503Listener } = await import('../utils/navigation.js');
-
-            const homePage = new HomePage(page);
-            const searchPage = new SearchPage(page);
-            const resultsPage = new ResultsPage(page);
-            const hotelPage = new HotelPage(page);
-            const flightPage = new FlightPage(page);
-
-            attach503Listener(page);
-
-            await homePage.navigate();
-            await homePage.acceptCookies();
-            await searchPage.selectRandomDeparture();
-            await searchPage.selectRandomDestination();
-            await searchPage.selectRandomDate();
-            await searchPage.configureGuests(2, 1);
-            await searchPage.search();
-            await resultsPage.selectFirstHotel();
-            await hotelPage.waitForPage();
-            await hotelPage.selectRoom();
-            await hotelPage.clickContinue();
-            await flightPage.getFlightInfo();
-            await flightPage.clickContinue();
-
-            passengerPageUrl = page.url();
-            savedStorageState = await context.storageState();
-            await context.close();
-        });
-
-        test.beforeEach(async ({ page, homePage, passengerPage }) => {
-            if (passengerPageUrl && savedStorageState) {
-                await page.context().addCookies(savedStorageState.cookies);
-                await safeGoto(page, passengerPageUrl);
-            } else {
-                const { SearchPage } = await import('../pages/SearchPage.js');
-                const { ResultsPage } = await import('../pages/ResultsPage.js');
-                const { HotelPage } = await import('../pages/HotelPage.js');
-                const { FlightPage } = await import('../pages/FlightPage.js');
-
-                const searchPage = new SearchPage(page);
-                const resultsPage = new ResultsPage(page);
-                const hotelPage = new HotelPage(page);
-                const flightPage = new FlightPage(page);
-
-                await homePage.navigate();
-                await homePage.acceptCookies();
-                await searchPage.selectRandomDeparture();
-                await searchPage.selectRandomDestination();
-                await searchPage.selectRandomDate();
-                await searchPage.configureGuests(2, 1);
-                await searchPage.search();
-                await resultsPage.selectFirstHotel();
-                await hotelPage.waitForPage();
-                await hotelPage.selectRoom();
-                await hotelPage.clickContinue();
-                await flightPage.getFlightInfo();
-                await flightPage.clickContinue();
-            }
+    test.describe('Passenger Details Validation', () => {
+        test.beforeEach(async ({ page, passengerPage, passengerPageState }) => {
+            await page.context().addCookies(passengerPageState.cookies);
+            await safeGoto(page, passengerPageState.url);
             await passengerPage.waitForPage();
         });
 

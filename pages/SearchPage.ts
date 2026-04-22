@@ -4,6 +4,7 @@ import { DatePicker } from '../components/DatePicker.js';
 import { RoomsGuests } from '../components/RoomsGuests.js';
 import { SELECTORS } from '../constants/selectors.js';
 import { REGEX } from '../constants/regex.js';
+import { TIMEOUTS } from '../playwright.config.js';
 
 export class SearchPage {
     private airportSelector: AirportSelector;
@@ -68,12 +69,12 @@ export class SearchPage {
     }
 
     async search(): Promise<void> {
-        const searchButton = this.page.locator(SELECTORS.SEARCH_BUTTON).getByRole('button');
+        const searchButton = this.page.getByRole('button', { name: 'search button' });
         await searchButton.click();
 
         const errorMessage = this.page.locator(SELECTORS.VALIDATION_ERROR)
             .filter({ hasText: REGEX.SEARCH_VALIDATION });
-        const hasError = await errorMessage.isVisible({ timeout: 2000 }).catch(() => false);
+        const hasError = await errorMessage.isVisible({ timeout: TIMEOUTS.OPTIONAL }).catch(() => false);
         if (hasError) {
             const errorText = await errorMessage.textContent().catch(() => 'Unknown validation error');
             throw new Error(`Search form validation error: ${errorText}`);

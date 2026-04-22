@@ -1,6 +1,7 @@
 import type { Page } from '@playwright/test';
 import { ARIA } from '../constants/selectors.js';
 import { REGEX } from '../constants/regex.js';
+import { TIMEOUTS } from '../playwright.config.js';
 
 export class AirportSelector {
     constructor(private page: Page) { }
@@ -10,10 +11,10 @@ export class AirportSelector {
         await departureTrigger.click();
 
         const airportsPanel = this.page.getByRole('region', { name: ARIA.AIRPORTS }).last();
-        await airportsPanel.waitFor({ state: 'visible', timeout: 10_000 });
+        await airportsPanel.waitFor({ state: 'visible' });
 
         const airportItems = airportsPanel.getByRole('listitem');
-        await airportItems.first().waitFor({ state: 'visible', timeout: 15_000 });
+        await airportItems.first().waitFor({ state: 'visible' });
 
         const count = await airportItems.count();
         if (count === 0) throw new Error('No departure airports found');
@@ -26,7 +27,7 @@ export class AirportSelector {
 
         const saveButton = airportsPanel.getByRole('button').filter({ hasText: REGEX.SAVE });
         await saveButton.click();
-        await airportsPanel.waitFor({ state: 'hidden', timeout: 5_000 });
+        await airportsPanel.waitFor({ state: 'hidden', timeout: TIMEOUTS.PANEL });
 
         return name;
     }
@@ -64,10 +65,10 @@ export class AirportSelector {
         await lijstToggle.click();
 
         const destinationsPanel = this.page.getByRole('region', { name: 'destinations' }).last();
-        await destinationsPanel.waitFor({ state: 'visible', timeout: 10_000 });
+        await destinationsPanel.waitFor({ state: 'visible' });
 
         await destinationsPanel.getByRole('listitem').first()
-            .waitFor({ state: 'visible', timeout: 15_000 });
+            .waitFor({ state: 'visible' });
 
         const enabledLinks = destinationsPanel.locator('a:not(.DestinationsList__disabled)')
             .filter({ hasText: REGEX.DESTINATION_WORD });
@@ -86,12 +87,14 @@ export class AirportSelector {
         await selectedLink.click({ force: true });
 
         const subPanelCheckboxes = destinationsPanel.getByRole('checkbox');
-        await subPanelCheckboxes.first().waitFor({ state: 'visible', timeout: 10_000 });
+        await subPanelCheckboxes.first().waitFor({ state: 'visible' });
         await subPanelCheckboxes.first().check();
 
         const saveButton = destinationsPanel.getByRole('button').filter({ hasText: REGEX.SAVE });
-        await saveButton.click({ timeout: 5_000 });
-        await destinationsPanel.waitFor({ state: 'hidden', timeout: 5_000 }).catch(() => { });
+        await saveButton.click();
+        await destinationsPanel.waitFor({ state: 'hidden', timeout: TIMEOUTS.PANEL }).catch((error) => {
+            console.warn('[AirportSelector] Destinations panel did not hide:', error.message);
+        });
 
         return randomPick.text;
     }

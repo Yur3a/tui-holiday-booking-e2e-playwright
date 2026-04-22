@@ -2,42 +2,44 @@ import type { Locator, Page } from '@playwright/test';
 import { ARIA, SELECTORS } from '../constants/selectors.js';
 import { REGEX } from '../constants/regex.js';
 import { MESSAGES } from '../constants/messages.js';
+import { TIMEOUTS } from '../playwright.config.js';
 
 export class PassengerPage {
-    constructor(private page: Page) { }
+    constructor(private page: Page, private passengerIndex = 0) { }
 
     async waitForPage(): Promise<void> {
         await this.page.waitForLoadState('domcontentloaded');
         await this.page.getByRole('heading', { level: 1 }).filter({ hasText: MESSAGES.PASSENGER_HEADING })
-            .waitFor({ state: 'visible', timeout: 30_000 });
+            .waitFor({ state: 'visible', timeout: TIMEOUTS.PAGE_LOAD });
     }
 
+    // Multiple passengers share the same field names; nth() scopes to a specific passenger
     get firstNameField(): Locator {
-        return this.page.getByRole('textbox', { name: ARIA.FIRST_NAME }).first();
+        return this.page.getByRole('textbox', { name: ARIA.FIRST_NAME }).nth(this.passengerIndex);
     }
 
     get lastNameField(): Locator {
-        return this.page.getByRole('textbox', { name: ARIA.LAST_NAME }).first();
+        return this.page.getByRole('textbox', { name: ARIA.LAST_NAME }).nth(this.passengerIndex);
     }
 
     get emailField(): Locator {
-        return this.page.getByRole('textbox', { name: ARIA.EMAIL }).first();
+        return this.page.getByRole('textbox', { name: ARIA.EMAIL }).nth(this.passengerIndex);
     }
 
     get phoneField(): Locator {
-        return this.page.getByRole('textbox', { name: ARIA.PHONE }).first();
+        return this.page.getByRole('textbox', { name: ARIA.PHONE }).nth(this.passengerIndex);
     }
 
     get dobDayField(): Locator {
-        return this.page.getByRole('textbox', { name: ARIA.DOB_DAY }).first();
+        return this.page.getByRole('textbox', { name: ARIA.DOB_DAY }).nth(this.passengerIndex);
     }
 
     get dobMonthField(): Locator {
-        return this.page.getByRole('textbox', { name: ARIA.DOB_MONTH }).first();
+        return this.page.getByRole('textbox', { name: ARIA.DOB_MONTH }).nth(this.passengerIndex);
     }
 
     get dobYearField(): Locator {
-        return this.page.getByRole('textbox', { name: ARIA.DOB_YEAR }).first();
+        return this.page.getByRole('textbox', { name: ARIA.DOB_YEAR }).nth(this.passengerIndex);
     }
 
     async fillFirstName(value: string): Promise<void> {
@@ -91,20 +93,16 @@ export class PassengerPage {
     }
 
     async submitForm(): Promise<void> {
-        const submitButton = this.page.getByRole('button').filter({ hasText: REGEX.SUBMIT }).first();
+        const submitButton = this.page.getByRole('button', { name: REGEX.SUBMIT });
         await submitButton.click();
     }
 
     private async getFieldError(field: Locator): Promise<string> {
-        let current = field.locator('xpath=..');
+        const errorContainer = field.locator('xpath=ancestor::*[.//div[@role="alert"]]').first();
+        const alert = errorContainer.getByRole('alert');
 
-        for (let i = 0; i < 4; i++) {
-            const alert = current.getByRole('alert').first();
-            if (await alert.isVisible().catch(() => false)) {
-                const text = (await alert.textContent())?.trim() ?? '';
-                if (text) return text;
-            }
-            current = current.locator('xpath=..');
+        if (await alert.isVisible({ timeout: TIMEOUTS.OPTIONAL }).catch(() => false)) {
+            return (await alert.textContent())?.trim() ?? '';
         }
 
         return '';
@@ -135,12 +133,12 @@ export class PassengerPage {
 
     async getFormBannerError(): Promise<string> {
         const banner = this.page.locator(SELECTORS.ERROR_BANNER)
-            .filter({ hasText: REGEX.ERROR_BANNER }).first();
+            .filter({ hasText: REGEX.ERROR_BANNER });
         if (await banner.isVisible().catch(() => false)) {
             return (await banner.textContent())?.trim() ?? '';
         }
         // Fallback: look for the banner by text
-        const bannerByText = this.page.getByText(REGEX.ERROR_BANNER_FULL).first();
+        const bannerByText = this.page.getByText(REGEX.ERROR_BANNER_FULL);
         if (await bannerByText.isVisible().catch(() => false)) {
             return (await bannerByText.textContent())?.trim() ?? '';
         }

@@ -1,4 +1,5 @@
 import type { Page } from '@playwright/test';
+import { TIMEOUTS } from '../playwright.config.js';
 
 const MAX_RETRIES = 3;
 const LOADING_OVERLAY_SELECTOR = '#loading-spinner [aria-busy="true"], #loading-spinner .LoadingSpinner__overlay';
@@ -35,27 +36,29 @@ export async function safeGoto(page: Page, url: string): Promise<void> {
     throw lastError ?? new Error(`Navigation failed after ${MAX_RETRIES} retries: ${url}`);
 }
 
-export async function waitForLoadingOverlayToClear(page: Page, timeout = 15_000): Promise<void> {
+export async function waitForLoadingOverlayToClear(page: Page, timeout?: number): Promise<void> {
     const overlay = page.locator(LOADING_OVERLAY_SELECTOR).first();
 
     const isVisible = await overlay.isVisible().catch(() => false);
     if (!isVisible) return;
 
     console.warn('[waitForOverlay] Loading spinner detected, waiting for it to clear...');
-    await overlay.waitFor({ state: 'hidden', timeout }).catch(() => {
-        console.warn(`[waitForOverlay] Spinner did not clear within ${timeout}ms, proceeding anyway`);
+    await overlay.waitFor({ state: 'hidden', ...(timeout !== undefined && { timeout }) }).catch(() => {
+        console.warn('[waitForOverlay] Spinner did not clear in time, proceeding anyway');
     });
 }
 
-export async function waitForPageReady(page: Page, timeout = 60_000): Promise<void> {
-    await page.waitForLoadState('domcontentloaded').catch(() => { });
-    await waitForLoadingOverlayToClear(page, timeout);
+export async function waitForPageReady(page: Page): Promise<void> {
+    await page.waitForLoadState('domcontentloaded').catch((error) => {
+        console.warn('[waitForPageReady] domcontentloaded wait failed:', error.message);
+    });
+    await waitForLoadingOverlayToClear(page);
 }
 
 async function isErrorPage(page: Page): Promise<boolean> {
     return page.getByRole('heading', { level: 1 })
         .filter({ hasText: /time-out opgetreden/i })
-        .isVisible({ timeout: 2_000 })
+        .isVisible({ timeout: TIMEOUTS.OPTIONAL })
         .catch(() => false);
 }
 
@@ -68,7 +71,9 @@ export function attach503Listener(page: Page): void {
         const isBroken = await isErrorPage(page).catch(() => false);
         if (isBroken) {
             console.warn('[503 Listener] Error page detected, reloading...');
-            await page.reload({ waitUntil: 'domcontentloaded' }).catch(() => { });
+            await page.reload({ waitUntil: 'domcontentloaded' }).catch((error) => {
+                console.warn('[503 Listener] Reload after 503 failed:', error.message);
+            });
         }
     });
 }

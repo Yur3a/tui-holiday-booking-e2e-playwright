@@ -1,6 +1,7 @@
 import type { Locator, Page } from '@playwright/test';
 import { ARIA } from '../constants/selectors.js';
 import { REGEX } from '../constants/regex.js';
+import { TIMEOUTS } from '../playwright.config.js';
 
 export class RoomsGuests {
     constructor(private page: Page) { }
@@ -12,7 +13,7 @@ export class RoomsGuests {
     async open(): Promise<void> {
         const trigger = this.page.getByRole('textbox', { name: ARIA.ROOMS_AND_GUESTS });
         await trigger.click();
-        await this.getPanel().waitFor({ state: 'visible', timeout: 10_000 });
+        await this.getPanel().waitFor({ state: 'visible' });
     }
 
     async setAdults(count: number): Promise<void> {
@@ -45,6 +46,8 @@ export class RoomsGuests {
     async confirm(): Promise<void> {
         const saveButton = this.getPanel().getByRole('button').filter({ hasText: REGEX.SAVE });
         await saveButton.click();
-        await this.getPanel().waitFor({ state: 'hidden', timeout: 5_000 }).catch(() => { });
+        await this.getPanel().waitFor({ state: 'hidden', timeout: TIMEOUTS.PANEL }).catch((error) => {
+            console.warn('[RoomsGuests] Panel did not hide after confirm:', error.message);
+        });
     }
 }
